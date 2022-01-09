@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from stockmate.lib import fmp_api
-
+from stocks.api.v1.serializers import FMPSearchSymbolSerializer
 
 class SearchFMPSymbolAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -12,7 +12,8 @@ class SearchFMPSymbolAPIView(APIView):
     def get(self, request,kw):
         data = fmp_api.search_symbol(kw)
         if data:
-            return Response(data, status=status.HTTP_200_OK)
+            results = FMPSearchSymbolSerializer(data, many=True, context={"request": request})
+            return Response(results.data)
         else:
             return Response(
                 {
