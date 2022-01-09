@@ -20,7 +20,12 @@ class Profile(models.Model):
 class FavoStock(TimeStampModel):
     # user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='favorites')
-    ticker = models.CharField(max_length=20, blank=False)
+    symbol = models.CharField(max_length=20, blank=False)
+    isin = models.CharField(max_length=12, blank=True)
+    is_fmp = models.BooleanField(default=False)
+    is_eod = models.BooleanField(default=False)
+    is_fh = models.BooleanField(default=False)
+    description = models.CharField(max_length=100, blank=False)
 
     def __str__(self):
-        return self.ticker
+        return self.symbol

@@ -137,3 +137,12 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
 }
+
+
+import environ
+
+env = environ.Env()
+env.read_env('.env')
+
+FMP_API_KEY = env('FMP_API_KEY')
+FMP_V3 = env('FMP_V3')
