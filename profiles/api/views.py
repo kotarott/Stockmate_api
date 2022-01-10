@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework.views import APIView
 from rest_framework.filters import SearchFilter
+from rest_framework.exceptions import ValidationError
 
 from profiles.models import Profile, FavoStock
 from profiles.api.serializers import ProfileSerializer, FavoStockSerializer
@@ -37,21 +38,58 @@ class FavoStockListAPIView(mixins.ListModelMixin,
         return self.list(request)
 
 
-class FavoStockLikeAPIView(generics.GenericAPIView):
+class FavoStockCreateAPIView(generics.CreateAPIView):
     queryset = FavoStock.objects.all()
     serializer_class = FavoStockSerializer
     permission_classes = [IsAuthenticated, IsOwnFavoStockOrReadOnly]
 
-    def post(self, request, symbol):
-        return self.create(request)
-    
-    def delete(self, request, symbol):
-        return self.delete(request)
+    def perform_create(self, serializer):
+        symbol = self.request.data.get('symbol')
+        user_profile = self.request.user.profile
+        queryset = self.get_queryset()
 
-# stocksのviewを作ってから。そこにuser_has_addedフィールドを入れる。
-# class FavoStockAPIView(APIView):
-#     serializer_class = FavoStockSerializer
-#     permission_classes = [IsAuthenticated, IsOwnFavoStockOrReadOnly]
+        has_user_added = self.queryset.filter(symbol=symbol, profile=user_profile).exists()
 
-#     def post(self, request, ticker):
+        if has_user_added:
+            raise ValidationError('already added.')
+        
+        serializer.save(profile=user_profile)
 
+
+class FavoStockDestroyAPIView(generics.DestroyAPIView):
+    queryset = FavoStock.objects.all()
+    serializer_class = FavoStockSerializer
+    permission_classes = [IsAuthenticated, IsOwnFavoStockOrReadOnly]
+    lookup_field ='symbol'
+
+    def perform_destroy(self, instance):
+        symbol = self.kwargs.get('symbol')
+        user_profile = self.request.user.profile
+        queryset = self.get_queryset()
+
+        has_user_added = self.queryset.filter(symbol=symbol, profile=user_profile).exists()
+
+        if not has_user_added:
+            raise ValidationError('not exists.')
+
+        instance.delete()
+
+
+# class FollowingListAPIView(mixins.ListModelMixin,
+#                            generics.GenericAPIView):
+#     serializer_class = FollowingSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         queryset = Profile.objects.all()
+#         request_uuid = self.kwargs.get('uuid')
+#         return queryset.filter(uuid=request_uuid)
+
+#     def get(self, request, uuid):
+#         return self.list(request)
+
+# class UserFollowingViewSet(viewsets.ModelViewSet):
+
+#     permission_classes = [IsAuthenticated, ]
+#     serializer_class = UserFollowingSerializer
+#     queryset = UserFollowing.objects.all()

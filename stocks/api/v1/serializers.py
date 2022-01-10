@@ -11,6 +11,7 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
     exchangeShortName = serializers.CharField(max_length=15)
     user_has_liked_symbol = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
+    vender = serializers.SerializerMethodField()
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
@@ -18,3 +19,6 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
 
     def get_like_count(self, instance):
         return FavoStock.objects.filter(symbol=instance['symbol']).count()
+
+    def get_vender(self, instance):
+        return 'FMP'
