@@ -9,7 +9,7 @@ from stocks.api.v1.serializers import FMPSearchSymbolSerializer
 class SearchFMPSymbolAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request,kw):
+    def get(self, request, kw):
         data = fmp_api.search_symbol(kw)
         if data:
             results = FMPSearchSymbolSerializer(data, many=True, context={"request": request})
