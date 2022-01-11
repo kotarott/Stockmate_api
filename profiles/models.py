@@ -12,16 +12,28 @@ class Profile(models.Model):
     age = models.PositiveIntegerField(blank=True, null=True)
     gender = models.CharField(max_length=20, blank=True)
     description = models.TextField()
-    # following = models.ManyToManyField(settings.AUTH_USER_MODEL, through='UserFollowing')
+    followees = models.ManyToManyField('self', through='FriendShip', symmetrical=False, related_name='+',
+                                       through_fields=('follower', 'followee'), verbose_name='フォロー中')
+    followers = models.ManyToManyField('self', through='FriendShip', symmetrical=False, related_name='+',
+                                       through_fields=('followee', 'follower'), verbose_name='フォロワー')
 
     def __str__(self):
         return self.user.username
 
 
-# class UserFollowing(models.Model):
-#     following = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-#     follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='me')
-#     created_at = models.DateTimeField(auto_now_add=True)
+class FriendShip(models.Model):
+    follower = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='followee_friendships')
+    followee = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='follower_friendships')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['follower','followee'],  name="unique_followers")
+        ]
+        ordering = ["-created_at"]
+    
+    def __str__(self):
+        return f'{self.follower.user.username} follows {self.followee.user.username}'
 
 
 class FavoStock(TimeStampModel):

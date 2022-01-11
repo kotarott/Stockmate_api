@@ -1,4 +1,4 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import get_object_or_404
 from rest_framework import viewsets
@@ -6,9 +6,10 @@ from rest_framework import mixins
 from rest_framework.views import APIView
 from rest_framework.filters import SearchFilter
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
-from profiles.models import Profile, FavoStock
-from profiles.api.serializers import ProfileSerializer, FavoStockSerializer
+from profiles.models import Profile, FavoStock, FriendShip
+from profiles.api.serializers import ProfileSerializer, FavoStockSerializer, FolloweeSerializer, FollowerSerializer
 from profiles.api.permissions import IsOwnProfileOrReadOnly, IsOwnFavoStockOrReadOnly
 
 
@@ -21,7 +22,7 @@ class ProfileViewSet(mixins.ListModelMixin,
     permission_classes = [IsAuthenticated, IsOwnProfileOrReadOnly]
     lookup_field ='uuid'
     filter_backends = [SearchFilter]
-    search_fields = ['description']
+    search_fields = ['description', 'user__username']
 
 
 class FavoStockListAPIView(mixins.ListModelMixin,
@@ -75,18 +76,62 @@ class FavoStockDestroyAPIView(generics.DestroyAPIView):
         instance.delete()
 
 
-# class FollowingListAPIView(mixins.ListModelMixin,
-#                            generics.GenericAPIView):
-#     serializer_class = FollowingSerializer
-#     permission_classes = [IsAuthenticated]
+class FolloweeListAPIView(mixins.ListModelMixin,
+                           generics.GenericAPIView):
+    serializer_class = FolloweeSerializer
+    permission_classes = [IsAuthenticated]
 
-#     def get_queryset(self):
-#         queryset = Profile.objects.all()
-#         request_uuid = self.kwargs.get('uuid')
-#         return queryset.filter(uuid=request_uuid)
+    def get_queryset(self):
+        queryset = FriendShip.objects.all()
+        request_uuid = self.kwargs.get('uuid')
+        return queryset.filter(follower__uuid=request_uuid)
 
-#     def get(self, request, uuid):
-#         return self.list(request)
+    def get(self, request, uuid):
+        return self.list(request)
+
+
+class FollowerListAPIView(mixins.ListModelMixin,
+                           generics.GenericAPIView):
+    serializer_class = FollowerSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = FriendShip.objects.all()
+        request_uuid = self.kwargs.get('uuid')
+        return queryset.filter(followee__uuid=request_uuid)
+
+    def get(self, request, uuid):
+        return self.list(request)
+
+
+class FollowAPIView(APIView):
+    serializer_class = ProfileSerializer
+    permmission_classes = [IsAuthenticated, IsOwnProfileOrReadOnly]
+
+    def post(self, request, uuid):
+        follow_user = Profile.objects.filter(uuid=uuid).get()
+
+        try:
+            follow = request.user.profile.followee_friendships.create(followee=follow_user)
+        except:
+            raise ValidationError('already added.')
+        
+        # serializer_context = {'request': request}
+        # serializer = self.serializer_class(follow, context=serializer_context)
+
+        return Response(status=status.HTTP_200_OK)
+
+    def delete(self, request, uuid):
+        follow_user = Profile.objects.filter(uuid=uuid).get()
+
+        try:
+            follow = request.user.profile.followee_friendships.get(followee=follow_user)
+            follow.delete()
+        except:
+            raise ValidationError('not exist.')
+        
+        return Response(status=status.HTTP_200_OK)
+
 
 # class UserFollowingViewSet(viewsets.ModelViewSet):
 
