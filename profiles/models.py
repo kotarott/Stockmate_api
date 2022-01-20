@@ -39,7 +39,6 @@ class FriendShip(models.Model):
 class FavoStock(TimeStampModel):
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='favorites')
     symbol = models.CharField(max_length=20, blank=False)
-    isin = models.CharField(max_length=12, blank=True)
     vender = models.CharField(max_length=10, blank=True)
     description = models.CharField(max_length=100, blank=False)
 
