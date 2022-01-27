@@ -8,7 +8,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from profiles.models import Profile, FavoStock, FriendShip
+from profiles.models import Profile, FriendShip #FavoStock,
 from profiles.api.serializers import ProfileSerializer, FolloweeSerializer, FollowerSerializer #FavoStockSerializer, 
 from profiles.api.permissions import IsOwnProfileOrReadOnly #, IsOwnFavoStockOrReadOnly
 

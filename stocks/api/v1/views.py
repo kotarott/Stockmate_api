@@ -1,6 +1,6 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -35,14 +35,15 @@ class SymbolLikeAPIView(APIView):
         return Respose(serializer.data, status=status.HTTP_200_OK)
 
 
-class StockCreateAPIView(generics.CreateAPIView):
+class SymbolCreateAPIView(generics.CreateAPIView):
     queryset = Symbol.objects.all()
     serializer_class = SymbolSerializer
     permission_classes = [IsAuthenticated, ]
 
+    # 上手くいかない
     def perform_create(self, serializer):
-        serializer_context = {"request": request}
-        serializer = self.serializer_class(symbol, context=serializer_context)
+        serializer_context = {"request": self.request}
+        serializer = self.serializer_class(context=serializer_context)
         serializer.save()
 
 

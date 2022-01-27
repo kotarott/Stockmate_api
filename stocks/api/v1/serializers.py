@@ -6,9 +6,12 @@ from stocks.models import Symbol
 
 class SymbolSerializer(serializers.ModelSerializer):
     user_has_liked_symbol = serializers.SerializerMethodField()
+    slug = serializers.SlugField(read_only=True)
+    vorters = serializers.
 
     class Meta:
         model = Symbol
+        exclude = ['created_at', 'updated_at']
 
     def create(self, validated_data):
         request_profile = self.context.request.user.profile

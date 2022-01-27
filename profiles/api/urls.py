@@ -1,7 +1,6 @@
 from django.urls import path, include, re_path
 from rest_framework.routers import DefaultRouter
-from profiles.api.views import (ProfileViewSet, 
-    FavoStockListAPIView, FavoStockCreateAPIView, FolloweeListAPIView, #FavoStockDestroyAPIView, 
+from profiles.api.views import (ProfileViewSet, FolloweeListAPIView, #FavoStockDestroyAPIView, FavoStockListAPIView, FavoStockCreateAPIView, 
     FollowerListAPIView, FollowAPIView)
 
 router = DefaultRouter()
