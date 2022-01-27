@@ -1,22 +1,22 @@
 from rest_framework import serializers
-from profiles.models import Profile, FavoStock, FriendShip
+from profiles.models import Profile, FriendShip #FavoStock, 
 from rest_framework.reverse import reverse
 
 
-class FavoStockSerializer(serializers.ModelSerializer):
-    profile = serializers.StringRelatedField(read_only=True)
+# class FavoStockSerializer(serializers.ModelSerializer):
+#     profile = serializers.StringRelatedField(read_only=True)
 
-    class Meta:
-        model = FavoStock
-        exclude = ('updated_at', )
+#     class Meta:
+#         model = FavoStock
+#         exclude = ('updated_at', )
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    favorites = serializers.HyperlinkedIdentityField(
-        view_name='favorites',
-        lookup_field='uuid'
-    )
+    # favorites = serializers.HyperlinkedIdentityField(
+    #     view_name='favorites',
+    #     lookup_field='uuid'
+    # )
     followees = serializers.HyperlinkedIdentityField(
         view_name='followees',
         lookup_field='uuid'

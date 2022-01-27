@@ -1,6 +1,23 @@
 from rest_framework import serializers
 
-from profiles.models import FavoStock
+# from profiles.models import FavoStock
+from stocks.models import Symbol
+
+
+class SymbolSerializer(serializers.ModelSerializer):
+    user_has_liked_symbol = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Symbol
+
+    def create(self, validated_data):
+        request_profile = self.context.request.user.profile
+        stock = Symbol.objects.create(**validated_data)
+        Symbol.voters.add(request_profile)
+        return stock
+
+    def get_user_has_liked_symbol(self, request):
+        request_profile = self.context.request.user.profile
 
 
 class FMPSearchSymbolSerializer(serializers.Serializer):
@@ -12,13 +29,17 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
     user_has_liked_symbol = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     vender = serializers.SerializerMethodField()
+    is_record = serializers.SerializerMethodField()
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
-        return FavoStock.objects.filter(profile=request.user.profile, symbol=instance['symbol']).exists()
+        return Symbol.objects.filter(profile=request.user.profile, symbol=instance['symbol']).voters.exists()
 
     def get_like_count(self, instance):
-        return FavoStock.objects.filter(symbol=instance['symbol']).count()
+        return Symbol.objects.filter(symbol=instance['symbol']).voters.count()
+
+    def is_record(self, instance):
+        return Symbol.objects.filter(symbol=instance['symbol']).exists()
 
     def get_vender(self, instance):
         return 'FMP'
@@ -47,8 +68,8 @@ class FMPSymbolProfileSerializer(serializers.Serializer):
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
-        return FavoStock.objects.filter(profile=request.user.profile, symbol=instance['symbol']).exists()
+        return Symbol.objects.filter(profile=request.user.profile, symbol=instance['symbol']).voters.exists()
 
     def get_like_count(self, instance):
-        return FavoStock.objects.filter(symbol=instance['symbol']).count()
+        return Symbol.objects.filter(symbol=instance['symbol']).voters.count()
 

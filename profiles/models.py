@@ -36,12 +36,12 @@ class FriendShip(models.Model):
         return f'{self.follower.user.username} follows {self.followee.user.username}'
 
 
-class FavoStock(TimeStampModel):
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='favorites')
-    symbol = models.CharField(max_length=20, blank=False)
-    vender = models.CharField(max_length=10, blank=True)
-    description = models.CharField(max_length=100, blank=False)
+# class FavoStock(TimeStampModel):
+#     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='favorites')
+#     symbol = models.CharField(max_length=20, blank=False)
+#     vender = models.CharField(max_length=10, blank=True)
+#     description = models.CharField(max_length=100, blank=False)
 
-    def __str__(self):
-        return f"{self.profile.user.username} likes {self.symbol}"
+#     def __str__(self):
+#         return f"{self.profile.user.username} likes {self.symbol}"
 

@@ -6,7 +6,44 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from stockmate.lib import fmp_api
-from stocks.api.v1.serializers import FMPSearchSymbolSerializer, FMPSymbolProfileSerializer
+from stocks.api.v1.serializers import FMPSearchSymbolSerializer, FMPSymbolProfileSerializer, SymbolSerializer
+from stocks.models import Symbol
+
+
+class SymbolLikeAPIView(APIView):
+    serializer_class = SymbolSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def post(self, request, slug):
+        symbol = get_object_or_404(Symbol, slug=slug)
+        symbol.vorters.add(request.user.profile)
+        symbol.save()
+
+        serializer_context = {"request": request}
+        serializer = self.serializer_class(symbol, context=serializer_context)
+
+        return Respose(serializer.data, status=status.HTTP_200_OK)
+    
+    def delete(self, request, slug):
+        symbol = get_object_or_404(Symbol, slug=slug)
+        symbol.vorters.remove(request.user.profile)
+        symbol.save()
+
+        serializer_context = {"request": request}
+        serializer = self.serializer_class(symbol, context=serializer_context)
+
+        return Respose(serializer.data, status=status.HTTP_200_OK)
+
+
+class StockCreateAPIView(generics.CreateAPIView):
+    queryset = Symbol.objects.all()
+    serializer_class = SymbolSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def perform_create(self, serializer):
+        serializer_context = {"request": request}
+        serializer = self.serializer_class(symbol, context=serializer_context)
+        serializer.save()
 
 
 class SearchFMPSymbolListAPIView(APIView):
