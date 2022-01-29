@@ -4,10 +4,12 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.generics import get_object_or_404
 
 from stockmate.lib import fmp_api
-from stocks.api.v1.serializers import FMPSearchSymbolSerializer, FMPSymbolProfileSerializer, SymbolSerializer
-from stocks.models import Symbol
+from stocks.api.v1.serializers import (FMPSearchSymbolSerializer, FMPSymbolProfileSerializer,
+    SymbolSerializer, FavoriteSymbolSerializer)
+from stocks.models import Symbol, FavoriteSymbol
 
 
 class SymbolLikeAPIView(APIView):
@@ -16,34 +18,44 @@ class SymbolLikeAPIView(APIView):
 
     def post(self, request, slug):
         symbol = get_object_or_404(Symbol, slug=slug)
-        symbol.vorters.add(request.user.profile)
+        symbol.voters.add(request.user.profile)
         symbol.save()
 
         serializer_context = {"request": request}
         serializer = self.serializer_class(symbol, context=serializer_context)
 
-        return Respose(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def delete(self, request, slug):
         symbol = get_object_or_404(Symbol, slug=slug)
-        symbol.vorters.remove(request.user.profile)
+        symbol.voters.remove(request.user.profile)
         symbol.save()
 
         serializer_context = {"request": request}
         serializer = self.serializer_class(symbol, context=serializer_context)
 
-        return Respose(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class SymbolCreateAPIView(generics.CreateAPIView):
+class SymbolLikeListAPIView(generics.ListAPIView):
+    serializer_class = FavoriteSymbolSerializer
+    permission_classes = [IsAuthenticated,]
+
+    def get_queryset(self):
+        queryset = FavoriteSymbol.objects.all()
+        request_uuid = self.kwargs.get('uuid')
+        return queryset.filter(profile__uuid=request_uuid)
+
+    def get(self, request, uuid):
+        return self.list(request)
+
+
+class SymbolListCreateAPIView(generics.ListCreateAPIView):
     queryset = Symbol.objects.all()
     serializer_class = SymbolSerializer
     permission_classes = [IsAuthenticated, ]
 
-    # 上手くいかない
     def perform_create(self, serializer):
-        serializer_context = {"request": self.request}
-        serializer = self.serializer_class(context=serializer_context)
         serializer.save()
 
 

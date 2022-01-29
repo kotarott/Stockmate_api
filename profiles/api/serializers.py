@@ -2,21 +2,17 @@ from rest_framework import serializers
 from profiles.models import Profile, FriendShip #FavoStock, 
 from rest_framework.reverse import reverse
 
-
-# class FavoStockSerializer(serializers.ModelSerializer):
-#     profile = serializers.StringRelatedField(read_only=True)
-
-#     class Meta:
-#         model = FavoStock
-#         exclude = ('updated_at', )
+from profiles.lib.birth import get_age
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    # favorites = serializers.HyperlinkedIdentityField(
-    #     view_name='favorites',
-    #     lookup_field='uuid'
-    # )
+    description = serializers.CharField(read_only=True)
+    generation = serializers.SerializerMethodField()
+    favorites = serializers.HyperlinkedIdentityField(
+        view_name='favorites',
+        lookup_field='uuid'
+    )
     followees = serializers.HyperlinkedIdentityField(
         view_name='followees',
         lookup_field='uuid'
@@ -32,7 +28,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        exclude = ('id', 'age', 'gender', )
+        exclude = ('id', 'gender', 'birth')
     
     def get_followee_count(self, instance):
         return instance.followees.count()
@@ -47,6 +43,20 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_is_user_follower(self, instance):
         request = self.context.get('request')
         return instance.followees.filter(user=request.user).exists()
+
+    def get_generation(self, instance):
+        birthday = instance.birth
+        if (birthday):
+            age = get_age(birthday.year, birthday.month, birthday.day)
+            return age
+        return False
+
+
+class ProfileCharacteristicSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Profile
+        fields = ('birth', 'gender', 'description')
 
 
 class FolloweeSerializer(serializers.ModelSerializer):

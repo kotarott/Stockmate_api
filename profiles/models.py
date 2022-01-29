@@ -9,7 +9,7 @@ from core.models import TimeStampModel
 class Profile(models.Model):
     uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    age = models.PositiveIntegerField(blank=True, null=True)
+    birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=20, blank=True)
     description = models.TextField()
     followees = models.ManyToManyField('self', through='FriendShip', symmetrical=False, related_name='+',
@@ -34,14 +34,3 @@ class FriendShip(models.Model):
     
     def __str__(self):
         return f'{self.follower.user.username} follows {self.followee.user.username}'
-
-
-# class FavoStock(TimeStampModel):
-#     profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='favorites')
-#     symbol = models.CharField(max_length=20, blank=False)
-#     vender = models.CharField(max_length=10, blank=True)
-#     description = models.CharField(max_length=100, blank=False)
-
-#     def __str__(self):
-#         return f"{self.profile.user.username} likes {self.symbol}"
-

@@ -12,7 +12,34 @@ class Symbol(TimeStampModel):
     exchange = models.CharField(max_length=100, blank=True)
     # mic = models.ForeignKey()
     vender = models.CharField(max_length=3, blank=False)
-    voters = models.ManyToManyField(Profile, related_name="like")
+    voters = models.ManyToManyField(Profile, related_name="like", through="FavoriteSymbol")
 
     def __str__(self):
-        return f'{self.symbol} of {self.vender}'
+        return f'{self.symbol}'
+
+
+class FavoriteSymbol(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['profile','symbol'],  name="unique_symbols")
+        ]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.profile.user.username} likes {self.symbol.symbol}'
+
+
+class Comment(TimeStampModel):
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE, related_name='comments')
+    body = models.TextField()
+
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.body} by {self.author.user.username}'

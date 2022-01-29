@@ -8,9 +8,9 @@ from rest_framework.filters import SearchFilter
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from profiles.models import Profile, FriendShip #FavoStock,
-from profiles.api.serializers import ProfileSerializer, FolloweeSerializer, FollowerSerializer #FavoStockSerializer, 
-from profiles.api.permissions import IsOwnProfileOrReadOnly #, IsOwnFavoStockOrReadOnly
+from profiles.models import Profile, FriendShip 
+from profiles.api.serializers import ProfileSerializer, FolloweeSerializer, FollowerSerializer, ProfileCharacteristicSerializer
+from profiles.api.permissions import IsOwnProfileOrReadOnly, IsOwnProfile
 
 
 class ProfileViewSet(mixins.ListModelMixin,
@@ -23,57 +23,6 @@ class ProfileViewSet(mixins.ListModelMixin,
     lookup_field ='uuid'
     filter_backends = [SearchFilter]
     search_fields = ['description', 'user__username']
-
-
-# class FavoStockListAPIView(mixins.ListModelMixin,
-#                            generics.GenericAPIView):
-#     serializer_class = FavoStockSerializer
-#     permission_classes = [IsAuthenticated, IsOwnFavoStockOrReadOnly]
-
-#     def get_queryset(self):
-#         queryset = FavoStock.objects.all()
-#         request_uuid = self.kwargs.get('uuid')
-#         return queryset.filter(profile__uuid=request_uuid).order_by('-created_at')
-
-#     def get(self, request, uuid):
-#         return self.list(request)
-
-
-# class FavoStockCreateAPIView(generics.CreateAPIView):
-#     queryset = FavoStock.objects.all()
-#     serializer_class = FavoStockSerializer
-#     permission_classes = [IsAuthenticated, IsOwnFavoStockOrReadOnly]
-
-#     def perform_create(self, serializer):
-#         symbol = self.request.data.get('symbol')
-#         user_profile = self.request.user.profile
-#         queryset = self.get_queryset()
-
-#         has_user_added = self.queryset.filter(symbol=symbol, profile=user_profile).exists()
-
-#         if has_user_added:
-#             raise ValidationError('already added.')
-        
-#         serializer.save(profile=user_profile)
-
-
-# class FavoStockDestroyAPIView(generics.DestroyAPIView):
-#     queryset = FavoStock.objects.all()
-#     serializer_class = FavoStockSerializer
-#     permission_classes = [IsAuthenticated, IsOwnFavoStockOrReadOnly]
-#     lookup_field ='symbol'
-
-#     def perform_destroy(self, instance):
-#         symbol = self.kwargs.get('symbol')
-#         user_profile = self.request.user.profile
-#         queryset = self.get_queryset()
-
-#         has_user_added = self.queryset.filter(symbol=symbol, profile=user_profile).exists()
-
-#         if not has_user_added:
-#             raise ValidationError('not exists.')
-
-#         instance.delete()
 
 
 class FolloweeListAPIView(mixins.ListModelMixin,
@@ -115,9 +64,6 @@ class FollowAPIView(APIView):
             follow = request.user.profile.followee_friendships.create(followee=follow_user)
         except:
             raise ValidationError('already added.')
-        
-        # serializer_context = {'request': request}
-        # serializer = self.serializer_class(follow, context=serializer_context)
 
         return Response(status=status.HTTP_200_OK)
 
@@ -133,8 +79,11 @@ class FollowAPIView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-# class UserFollowingViewSet(viewsets.ModelViewSet):
+class CharacteristicUpdateAPIView(generics.UpdateAPIView):
+    serializer_class = ProfileCharacteristicSerializer
+    permission_classes = [IsAuthenticated, IsOwnProfile]
 
-#     permission_classes = [IsAuthenticated, ]
-#     serializer_class = UserFollowingSerializer
-#     queryset = UserFollowing.objects.all()
+    def get_object(self):
+        profile_object = self.request.user.profile
+        print(profile_object)
+        return profile_object

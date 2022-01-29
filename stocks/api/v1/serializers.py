@@ -1,26 +1,51 @@
 from rest_framework import serializers
 
 # from profiles.models import FavoStock
-from stocks.models import Symbol
+from stocks.models import Symbol, FavoriteSymbol, Comment
 
 
 class SymbolSerializer(serializers.ModelSerializer):
     user_has_liked_symbol = serializers.SerializerMethodField()
     slug = serializers.SlugField(read_only=True)
-    vorters = serializers.
+    likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Symbol
-        exclude = ['created_at', 'updated_at']
+        exclude = ['created_at', 'updated_at', 'voters', 'id']
 
     def create(self, validated_data):
-        request_profile = self.context.request.user.profile
+        request = self.context.get('request')
         stock = Symbol.objects.create(**validated_data)
-        Symbol.voters.add(request_profile)
+        stock.voters.add(request.user.profile)
         return stock
 
-    def get_user_has_liked_symbol(self, request):
-        request_profile = self.context.request.user.profile
+    def get_user_has_liked_symbol(self, instance):
+        request = self.context.get('request')
+        return instance.voters.filter(pk=request.user.profile.id).exists()
+
+    def get_likes_count(self, instance):
+        return instance.voters.count()
+    
+    def get_comments_count(self, instance):
+        return instance.comments.conut()
+
+
+class FavoriteSymbolSerializer(serializers.ModelSerializer):
+    symbol = SymbolSerializer()
+
+    class Meta:
+        model = FavoriteSymbol
+        exclude = ('id', 'profile',)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    symbol = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Comment
+        exclude = ('id', 'updated_at', )
 
 
 class FMPSearchSymbolSerializer(serializers.Serializer):
@@ -30,18 +55,31 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
     stockExchange = serializers.CharField(max_length=100)
     exchangeShortName = serializers.CharField(max_length=15)
     user_has_liked_symbol = serializers.SerializerMethodField()
-    like_count = serializers.SerializerMethodField()
+    likes_count = serializers.SerializerMethodField()
+    comments_count = serializers.SerializerMethodField()
     vender = serializers.SerializerMethodField()
     is_record = serializers.SerializerMethodField()
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
-        return Symbol.objects.filter(profile=request.user.profile, symbol=instance['symbol']).voters.exists()
+        is_symbol = Symbol.objects.filter(symbol=instance['symbol']).exists()
+        if is_symbol:
+            return Symbol.objects.get(symbol=instance['symbol']).voters.filter(pk=request.user.profile.id).exists()
+        return False
 
-    def get_like_count(self, instance):
-        return Symbol.objects.filter(symbol=instance['symbol']).voters.count()
+    def get_likes_count(self, instance):
+        is_symbol = Symbol.objects.filter(symbol=instance['symbol']).exists()
+        if is_symbol:
+            return Symbol.objects.get(symbol=instance['symbol']).voters.count()
+        return 0
+    
+    def get_comments_count(self, instance):
+        is_symbol = Symbol.objects.filter(symbol=instance['symbol']).exists()
+        if is_symbol:
+            return Symbol.objects.get(symbol=instance['symbol']).comments.count()
+        return 0
 
-    def is_record(self, instance):
+    def get_is_record(self, instance):
         return Symbol.objects.filter(symbol=instance['symbol']).exists()
 
     def get_vender(self, instance):
@@ -68,11 +106,26 @@ class FMPSymbolProfileSerializer(serializers.Serializer):
     ipoDate = serializers.DateField()
     user_has_liked_symbol = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
+    vender = serializers.SerializerMethodField()
+    is_record = serializers.SerializerMethodField()
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
-        return Symbol.objects.filter(profile=request.user.profile, symbol=instance['symbol']).voters.exists()
+        is_symbol = Symbol.objects.filter(symbol=instance['symbol']).exists()
+        if is_symbol:
+            return Symbol.objects.get(symbol=instance['symbol']).voters.filter(pk=request.user.profile.id).exists()
+        return False
 
     def get_like_count(self, instance):
-        return Symbol.objects.filter(symbol=instance['symbol']).voters.count()
+        request = self.context.get('request')
+        is_symbol = Symbol.objects.filter(symbol=instance['symbol']).exists()
+        if is_symbol:
+            return Symbol.objects.get(symbol=instance['symbol']).voters.count()
+        return 0
+    
+    def get_vender(self, instance):
+        return 'FMP'
+    
+    def get_is_record(self, instance):
+        return Symbol.objects.filter(symbol=instance['symbol']).exists()
 
