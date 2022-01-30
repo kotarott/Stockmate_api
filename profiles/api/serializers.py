@@ -13,6 +13,10 @@ class ProfileSerializer(serializers.ModelSerializer):
         view_name='favorites',
         lookup_field='uuid'
     )
+    comments = serializers.HyperlinkedIdentityField(
+        view_name='comments',
+        lookup_field='uuid'
+    )
     followees = serializers.HyperlinkedIdentityField(
         view_name='followees',
         lookup_field='uuid'

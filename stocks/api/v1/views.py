@@ -5,11 +5,15 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
+from rest_framework import viewsets
+from rest_framework import mixins
+from rest_framework.filters import SearchFilter
 
 from stockmate.lib import fmp_api
+from stocks.api.v1.permissions import IsOwnCommentOrReadOnly, IsAdminOrReadOnly
 from stocks.api.v1.serializers import (FMPSearchSymbolSerializer, FMPSymbolProfileSerializer,
-    SymbolSerializer, FavoriteSymbolSerializer)
-from stocks.models import Symbol, FavoriteSymbol
+    SymbolSerializer, FavoriteSymbolSerializer, SymbolCommentSerializer, TagSerializer, SymbolTagsSerializer)
+from stocks.models import Symbol, FavoriteSymbol, Comment, Tag
 
 
 class SymbolLikeAPIView(APIView):
@@ -46,19 +50,81 @@ class SymbolLikeListAPIView(generics.ListAPIView):
         request_uuid = self.kwargs.get('uuid')
         return queryset.filter(profile__uuid=request_uuid)
 
-    def get(self, request, uuid):
-        return self.list(request)
 
-
-class SymbolListCreateAPIView(generics.ListCreateAPIView):
+class SymbolListViewSet(viewsets.GenericViewSet,
+                        mixins.ListModelMixin,
+                        mixins.CreateModelMixin):
     queryset = Symbol.objects.all()
     serializer_class = SymbolSerializer
     permission_classes = [IsAuthenticated, ]
 
+
+class SymbolCommentListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = SymbolCommentSerializer
+    permission_classes = [IsAuthenticated, IsOwnCommentOrReadOnly]
+
+    def get_queryset(self):
+        request_slug = self.kwargs.get('slug')
+        queryset = Comment.objects.filter(symbol__slug=request_slug).order_by('-created_at')
+        return queryset
+ 
     def perform_create(self, serializer):
-        serializer.save()
+        symbol = Symbol.objects.get(slug=self.kwargs.get('slug'))
+        profile = self.request.user.profile
+        serializer.save(symbol=symbol, author=profile)
 
 
+class CommentViewSet(viewsets.GenericViewSet,
+                     mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     mixins.DestroyModelMixin):
+    queryset = Comment.objects.all().order_by('-created_at')
+    serializer_class = SymbolCommentSerializer
+    permission_classes = [IsAuthenticated, IsOwnCommentOrReadOnly]
+    filter_backends = [SearchFilter]
+    search_fields = ['body', 'symbol__symbol', 'symbol__description']
+
+
+class ProfileCommentListAPIView(generics.ListAPIView):
+    serializer_class = SymbolCommentSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_queryset(self):
+        request_uuid = self.kwargs.get('uuid')
+        queryset = Comment.objects.filter(author__uuid=request_uuid).order_by('-created_at')
+        return queryset
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
+
+class SymbolTagsRUDAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = SymbolTagsSerializer
+    permission_classes = [IsAuthenticated, ]
+    lookup_field = 'slug'
+
+    def get_queryset(self):
+        queryset = Symbol.objects.all()
+        request_slug = self.kwargs.get('slug')
+        return queryset.filter(slug=request_slug)
+
+
+class TagToSymbolListAPIView(generics.ListAPIView):
+    serializer_class = SymbolSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_queryset(self):
+        request_tag = self.kwargs.get('name')
+        queryset = Tag.objects.get(name=request_tag).symbol_set.all()
+        print(queryset)
+        return queryset
+
+
+# stockAPI
 class SearchFMPSymbolListAPIView(APIView):
     permission_classes = [IsAuthenticated, ]
     serializer_class = FMPSearchSymbolSerializer

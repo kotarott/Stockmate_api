@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,6 +25,6 @@ urlpatterns = [
     path('auth/',include('djoser.urls.authtoken')),
 
     path('api/', include('profiles.api.urls')),
-    path('api/stocks/v1/', include('stocks.api.v1.urls')),
+    path('api/', include('stocks.api.v1.urls')),
     # re_path(r'^.*$', IndexTemplateView.as_view(), name='spa-entry-point'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

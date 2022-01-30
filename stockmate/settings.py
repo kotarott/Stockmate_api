@@ -148,6 +148,9 @@ CORS_ORIGIN_WHITELIST = (
 
 LOGIN_URL = "/auth/token/login/"
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = "uploads"
+
 import environ
 
 env = environ.Env()

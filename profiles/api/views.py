@@ -14,7 +14,6 @@ from profiles.api.permissions import IsOwnProfileOrReadOnly, IsOwnProfile
 
 
 class ProfileViewSet(mixins.ListModelMixin,
-                     mixins.UpdateModelMixin,
                      mixins.RetrieveModelMixin,
                      viewsets.GenericViewSet):
     queryset = Profile.objects.all()

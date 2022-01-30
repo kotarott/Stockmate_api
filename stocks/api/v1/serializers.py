@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 # from profiles.models import FavoStock
-from stocks.models import Symbol, FavoriteSymbol, Comment
+from stocks.models import Symbol, FavoriteSymbol, Comment, Tag
 
 
 class SymbolSerializer(serializers.ModelSerializer):
@@ -9,16 +9,11 @@ class SymbolSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
+    tags = serializers.StringRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Symbol
         exclude = ['created_at', 'updated_at', 'voters', 'id']
-
-    def create(self, validated_data):
-        request = self.context.get('request')
-        stock = Symbol.objects.create(**validated_data)
-        stock.voters.add(request.user.profile)
-        return stock
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
@@ -28,7 +23,21 @@ class SymbolSerializer(serializers.ModelSerializer):
         return instance.voters.count()
     
     def get_comments_count(self, instance):
-        return instance.comments.conut()
+        return instance.comments.count()
+
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = '__all__'
+
+
+class SymbolTagsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Symbol
+        fields = ('tags', )
 
 
 class FavoriteSymbolSerializer(serializers.ModelSerializer):
@@ -39,15 +48,32 @@ class FavoriteSymbolSerializer(serializers.ModelSerializer):
         exclude = ('id', 'profile',)
 
 
-class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
+class SymbolCommentSerializer(serializers.ModelSerializer):
     symbol = serializers.StringRelatedField(read_only=True)
+    symbol_des = serializers.SerializerMethodField()
+    symbol_slug = serializers.SerializerMethodField()
+    author = serializers.StringRelatedField(read_only=True)
+    author_uuid = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        exclude = ('id', 'updated_at', )
+        exclude = ('updated_at', )
+
+    def get_author_uuid(self, instance):
+        return instance.author.uuid
+
+    def get_created_at(self, instance):
+        return instance.created_at.strftime('%B %d, %T')
+
+    def get_symbol_des(self, instance):
+        return instance.symbol.description
+
+    def get_symbol_slug(self, instance):
+        return instance.symbol.slug
 
 
+# StockAPI
 class FMPSearchSymbolSerializer(serializers.Serializer):
     symbol = serializers.CharField(max_length=20)
     name = serializers.CharField(max_length=100)
@@ -58,7 +84,8 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     vender = serializers.SerializerMethodField()
-    is_record = serializers.SerializerMethodField()
+    symbol_slug = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
@@ -79,11 +106,20 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
             return Symbol.objects.get(symbol=instance['symbol']).comments.count()
         return 0
 
-    def get_is_record(self, instance):
-        return Symbol.objects.filter(symbol=instance['symbol']).exists()
+    def get_symbol_slug(self, instance):
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            return symbol.get().slug
+        return False
 
     def get_vender(self, instance):
         return 'FMP'
+
+    def get_tags(self, instance):
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            return symbol.get().tags.values('id', 'name')
+        return False
 
 
 class FMPSymbolProfileSerializer(serializers.Serializer):
@@ -107,7 +143,8 @@ class FMPSymbolProfileSerializer(serializers.Serializer):
     user_has_liked_symbol = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     vender = serializers.SerializerMethodField()
-    is_record = serializers.SerializerMethodField()
+    symbol_slug = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
@@ -126,6 +163,15 @@ class FMPSymbolProfileSerializer(serializers.Serializer):
     def get_vender(self, instance):
         return 'FMP'
     
-    def get_is_record(self, instance):
-        return Symbol.objects.filter(symbol=instance['symbol']).exists()
+    def get_symbol_slug(self, instance):
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            return symbol.get().slug
+        return False
+
+    def get_tags(self, instance):
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            return symbol.get().tags.values()
+        return False
 
