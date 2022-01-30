@@ -24,6 +24,15 @@ class ProfileViewSet(mixins.ListModelMixin,
     search_fields = ['description', 'user__username']
 
 
+class MyProfileRetrieveAPIView(generics.RetrieveAPIView):
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated, IsOwnProfile]
+
+    def get_object(self):
+        request_user = self.request.user.profile
+        return request_user
+
+
 class FolloweeListAPIView(mixins.ListModelMixin,
                            generics.GenericAPIView):
     serializer_class = FolloweeSerializer

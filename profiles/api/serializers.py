@@ -9,26 +9,27 @@ class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     description = serializers.CharField(read_only=True)
     generation = serializers.SerializerMethodField()
-    favorites = serializers.HyperlinkedIdentityField(
-        view_name='favorites',
-        lookup_field='uuid'
-    )
-    comments = serializers.HyperlinkedIdentityField(
-        view_name='comments',
-        lookup_field='uuid'
-    )
-    followees = serializers.HyperlinkedIdentityField(
-        view_name='followees',
-        lookup_field='uuid'
-    )
-    followers = serializers.HyperlinkedIdentityField(
-        view_name='followers',
-        lookup_field='uuid'
-    )
+    # favorites = serializers.HyperlinkedIdentityField(
+    #     view_name='favorites',
+    #     lookup_field='uuid'
+    # )
+    # comments = serializers.HyperlinkedIdentityField(
+    #     view_name='comments',
+    #     lookup_field='uuid'
+    # )
+    # followees = serializers.HyperlinkedIdentityField(
+    #     view_name='followees',
+    #     lookup_field='uuid'
+    # )
+    # followers = serializers.HyperlinkedIdentityField(
+    #     view_name='followers',
+    #     lookup_field='uuid'
+    # )
     followee_count = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()
     is_user_followee = serializers.SerializerMethodField()
     is_user_follower = serializers.SerializerMethodField()
+    is_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
@@ -54,6 +55,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             age = get_age(birthday.year, birthday.month, birthday.day)
             return age
         return False
+    
+    def get_is_user(self, instance):
+        request = self.context.get('request')
+        return instance.user == request.user
 
 
 class ProfileCharacteristicSerializer(serializers.ModelSerializer):
@@ -66,6 +71,8 @@ class ProfileCharacteristicSerializer(serializers.ModelSerializer):
 class FolloweeSerializer(serializers.ModelSerializer):
     followee = serializers.StringRelatedField(read_only=True)
     uuid = serializers.SerializerMethodField()
+    followee_count = serializers.SerializerMethodField()
+    follower_count = serializers.SerializerMethodField()
 
     class Meta:
         model = FriendShip
@@ -73,11 +80,19 @@ class FolloweeSerializer(serializers.ModelSerializer):
 
     def get_uuid(self, instance):
         return instance.followee.uuid
+    
+    def get_followee_count(self, instance):
+        return instance.followee.followees.count()
+    
+    def get_follower_count(self, instance):
+        return instance.followee.followers.count()
 
 
 class FollowerSerializer(serializers.ModelSerializer):
     follower = serializers.StringRelatedField(read_only=True)
     uuid = serializers.SerializerMethodField()
+    followee_count = serializers.SerializerMethodField()
+    follower_count = serializers.SerializerMethodField()
 
     class Meta:
         model = FriendShip
@@ -85,3 +100,9 @@ class FollowerSerializer(serializers.ModelSerializer):
 
     def get_uuid(self, instance):
         return instance.followee.uuid
+
+    def get_followee_count(self, instance):
+        return instance.follower.followees.count()
+    
+    def get_follower_count(self, instance):
+        return instance.follower.followers.count()
