@@ -52,6 +52,7 @@ class SymbolLikeListAPIView(generics.ListAPIView):
 
 
 class SymbolListViewSet(viewsets.GenericViewSet,
+                        mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
                         mixins.CreateModelMixin):
     queryset = Symbol.objects.all()

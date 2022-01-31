@@ -9,7 +9,7 @@ class SymbolSerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
-    tags = serializers.StringRelatedField(many=True, read_only=True)
+    tags = serializers.SerializerMethodField()
 
     class Meta:
         model = Symbol
@@ -24,6 +24,9 @@ class SymbolSerializer(serializers.ModelSerializer):
     
     def get_comments_count(self, instance):
         return instance.comments.count()
+    
+    def get_tags(self, instance):
+        return instance.tags.values('id', 'name')
 
 
 class TagSerializer(serializers.ModelSerializer):

@@ -63,7 +63,7 @@ class FollowerListAPIView(mixins.ListModelMixin,
 
 class FollowAPIView(APIView):
     serializer_class = ProfileSerializer
-    permmission_classes = [IsAuthenticated, IsOwnProfileOrReadOnly]
+    permmission_classes = [IsAuthenticated, IsOwnProfile]
 
     def post(self, request, uuid):
         follow_user = Profile.objects.filter(uuid=uuid).get()
@@ -73,7 +73,13 @@ class FollowAPIView(APIView):
         except:
             raise ValidationError('already added.')
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(
+            {
+                "request": 'add',
+                'completed': True
+            },
+            status=status.HTTP_200_OK
+        )
 
     def delete(self, request, uuid):
         follow_user = Profile.objects.filter(uuid=uuid).get()
@@ -84,7 +90,13 @@ class FollowAPIView(APIView):
         except:
             raise ValidationError('not exist.')
         
-        return Response(status=status.HTTP_200_OK)
+        return Response(
+            {
+                "request": 'remove',
+                'completed': True
+            },
+            status=status.HTTP_200_OK
+        )
 
 
 class CharacteristicUpdateAPIView(generics.UpdateAPIView):
