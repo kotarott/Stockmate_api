@@ -141,11 +141,11 @@ class FollowerSerializer(serializers.ModelSerializer):
 
     def get_is_user_followee(self, instance):
         request = self.context.get('request')
-        return instance.follower.followees.filter(user=request.user).exists()
+        return instance.follower.followers.filter(user=request.user).exists()
     
     def get_is_user_follower(self, instance):
         request = self.context.get('request')
-        return instance.follower.followers.filter(user=request.user).exists()
+        return instance.follower.followees.filter(user=request.user).exists()
     
     def get_is_user(self, instance):
         request = self.context.get('request')
