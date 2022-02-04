@@ -8,6 +8,7 @@ from profiles.lib.birth import get_age
 class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     description = serializers.CharField(read_only=True)
+    avater = serializers.ImageField(read_only=True)
     # generation = serializers.SerializerMethodField()
     # favorites = serializers.HyperlinkedIdentityField(
     #     view_name='favorites',
@@ -61,16 +62,26 @@ class ProfileSerializer(serializers.ModelSerializer):
         return instance.user == request.user
 
 
+class UnitProfileSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    avater = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ('user', 'avater', 'uuid')
+
+
 class ProfileCharacteristicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ('birth', 'gender', 'description')
+        fields = ('birth', 'gender', 'description', 'avater')
 
 
 class FolloweeSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
+    avater = serializers.ImageField(read_only=True)
     uuid = serializers.SerializerMethodField()
     followee_count = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()
@@ -113,6 +124,7 @@ class FolloweeSerializer(serializers.ModelSerializer):
 class FollowerSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
+    avater = serializers.ImageField(read_only=True)
     uuid = serializers.SerializerMethodField()
     followee_count = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()

@@ -1,7 +1,15 @@
 from rest_framework import serializers
 
 # from profiles.models import FavoStock
-from stocks.models import Symbol, FavoriteSymbol, Comment, Tag
+from stocks.models import Symbol, FavoriteSymbol, Comment, Tag, Image
+from profiles.api.serializers import UnitProfileSerializer
+
+
+class ImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Image
+        exclude = ('id')
 
 
 class SymbolSerializer(serializers.ModelSerializer):
@@ -10,10 +18,11 @@ class SymbolSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
+    photo = serializers.ImageField(read_only=True)
 
     class Meta:
         model = Symbol
-        exclude = ['created_at', 'updated_at', 'voters', 'id']
+        exclude = ['created_at', 'updated_at', 'voters', 'id', ]
 
     def get_user_has_liked_symbol(self, instance):
         request = self.context.get('request')
@@ -29,7 +38,15 @@ class SymbolSerializer(serializers.ModelSerializer):
         return instance.tags.values('id', 'name')
 
 
+class UnitSymbolSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Symbol
+        fields = ('slug', 'symbol', )
+
+
 class TagSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = Tag
@@ -52,28 +69,26 @@ class FavoriteSymbolSerializer(serializers.ModelSerializer):
 
 
 class SymbolCommentSerializer(serializers.ModelSerializer):
-    symbol = serializers.StringRelatedField(read_only=True)
-    symbol_des = serializers.SerializerMethodField()
-    symbol_slug = serializers.SerializerMethodField()
-    author = serializers.StringRelatedField(read_only=True)
-    author_uuid = serializers.SerializerMethodField()
+    author = UnitProfileSerializer(read_only=True)
+    symbols = UnitSymbolSerializer(read_only=True, many=True)
+    reply = serializers.StringRelatedField(read_only=True)
+    like_count = serializers.SerializerMethodField()
+    user_has_liked_comment = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        exclude = ('updated_at', )
-
-    def get_author_uuid(self, instance):
-        return instance.author.uuid
+        exclude = ('updated_at', 'id', 'likes')
 
     def get_created_at(self, instance):
         return instance.created_at.strftime('%B %d, %T')
 
-    def get_symbol_des(self, instance):
-        return instance.symbol.description
+    def get_like_count(self, instance):
+        return instance.likes.count()
 
-    def get_symbol_slug(self, instance):
-        return instance.symbol.slug
+    def get_user_has_liked_comment(self, instance):
+        request = self.context.get('request')
+        return instance.likes.filter(pk=request.user.profile.id).exists()
 
 
 # StockAPI

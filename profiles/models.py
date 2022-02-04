@@ -11,7 +11,8 @@ class Profile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=20, blank=True)
-    description = models.TextField()
+    description = models.TextField(blank=True)
+    avater = models.ImageField(null=True, blank=True, upload_to='avaters')
     followees = models.ManyToManyField('self', through='FriendShip', symmetrical=False, related_name='+',
                                        through_fields=('follower', 'followee'), verbose_name='フォロー中')
     followers = models.ManyToManyField('self', through='FriendShip', symmetrical=False, related_name='+',

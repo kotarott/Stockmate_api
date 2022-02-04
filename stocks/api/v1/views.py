@@ -84,6 +84,7 @@ class CommentViewSet(viewsets.GenericViewSet,
     serializer_class = SymbolCommentSerializer
     permission_classes = [IsAuthenticated, IsOwnCommentOrReadOnly]
     filter_backends = [SearchFilter]
+    lookup_field = 'uuid'
     search_fields = ['body', 'symbol__symbol', 'symbol__description']
 
 
