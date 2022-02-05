@@ -1,5 +1,8 @@
 from rest_framework import serializers
 
+from django.conf import settings
+from django.conf.urls.static import static
+
 # from profiles.models import FavoStock
 from stocks.models import Symbol, FavoriteSymbol, Comment, Tag, Image
 from profiles.api.serializers import UnitProfileSerializer
@@ -9,16 +12,26 @@ class ImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Image
-        exclude = ('id')
+        exclude = ('id', )
 
 
 class SymbolSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = Symbol
+        exclude = ['voters', 'id', ]
+
+
+class UnitSymbolSerializer(serializers.ModelSerializer):
     user_has_liked_symbol = serializers.SerializerMethodField()
     slug = serializers.SlugField(read_only=True)
     likes_count = serializers.SerializerMethodField()
     comments_count = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
-    photo = serializers.ImageField(read_only=True)
+    photo = serializers.SerializerMethodField()
 
     class Meta:
         model = Symbol
@@ -35,22 +48,30 @@ class SymbolSerializer(serializers.ModelSerializer):
         return instance.comments.count()
     
     def get_tags(self, instance):
-        return instance.tags.values('id', 'name')
-
-
-class UnitSymbolSerializer(serializers.ModelSerializer):
+        return instance.tags.values('slug', 'name')
     
-    class Meta:
-        model = Symbol
-        fields = ('slug', 'symbol', )
+    def get_photo(self, instance):
+        request = self.context.get('request')
+        if instance.photo:
+            return request.build_absolute_uri(instance.photo.image.url)
+        return False
 
 
 class TagSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(read_only=True)
+    slug = serializers.SlugField(read_only=True)
 
     class Meta:
         model = Tag
-        fields = '__all__'
+        exclude = ('id',)
+
+
+class UnitTagSerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
+    image = ImageSerializer(read_only=True)
+
+    class Meta:
+        model = Tag
+        exclude = ('id', )
 
 
 class SymbolTagsSerializer(serializers.ModelSerializer):
@@ -61,7 +82,7 @@ class SymbolTagsSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSymbolSerializer(serializers.ModelSerializer):
-    symbol = SymbolSerializer()
+    symbol = UnitSymbolSerializer()
 
     class Meta:
         model = FavoriteSymbol
@@ -70,7 +91,7 @@ class FavoriteSymbolSerializer(serializers.ModelSerializer):
 
 class SymbolCommentSerializer(serializers.ModelSerializer):
     author = UnitProfileSerializer(read_only=True)
-    symbols = UnitSymbolSerializer(read_only=True, many=True)
+    symbols = serializers.SerializerMethodField()
     reply = serializers.StringRelatedField(read_only=True)
     like_count = serializers.SerializerMethodField()
     user_has_liked_comment = serializers.SerializerMethodField()
@@ -79,6 +100,9 @@ class SymbolCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         exclude = ('updated_at', 'id', 'likes')
+    
+    def get_symbols(self, instance):
+        return instance.symbols.values('slug', 'description')
 
     def get_created_at(self, instance):
         return instance.created_at.strftime('%B %d, %T')
@@ -95,6 +119,8 @@ class SymbolCommentSerializer(serializers.ModelSerializer):
 class FMPSearchSymbolSerializer(serializers.Serializer):
     symbol = serializers.CharField(max_length=20)
     name = serializers.CharField(max_length=100)
+    image = serializers.SerializerMethodField()
+    photo = serializers.SerializerMethodField()
     currency = serializers.CharField(max_length=3)
     stockExchange = serializers.CharField(max_length=100)
     exchangeShortName = serializers.CharField(max_length=15)
@@ -138,6 +164,21 @@ class FMPSearchSymbolSerializer(serializers.Serializer):
         if symbol.exists():
             return symbol.get().tags.values('id', 'name')
         return False
+    
+    def get_image(self, instance):
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            return symbol.get().image
+        return False
+
+    def get_photo(self, instance):
+        request = self.context.get('request')
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            if symbol.get().photo:
+                return request.build_absolute_uri(symbol.get().photo.image.url)
+            return False
+        return False
 
 
 class FMPSymbolProfileSerializer(serializers.Serializer):
@@ -158,6 +199,7 @@ class FMPSymbolProfileSerializer(serializers.Serializer):
     image = serializers.URLField(max_length=200)
     address = serializers.CharField(max_length=100)
     ipoDate = serializers.DateField()
+    photo = serializers.SerializerMethodField()
     user_has_liked_symbol = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     vender = serializers.SerializerMethodField()
@@ -191,5 +233,11 @@ class FMPSymbolProfileSerializer(serializers.Serializer):
         symbol = Symbol.objects.filter(symbol=instance['symbol'])
         if symbol.exists():
             return symbol.get().tags.values()
+        return False
+
+    def get_photo(self, instance):
+        symbol = Symbol.objects.filter(symbol=instance['symbol'])
+        if symbol.exists():
+            return symbol.get().photo
         return False
 

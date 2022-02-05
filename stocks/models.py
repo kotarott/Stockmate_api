@@ -14,6 +14,7 @@ class Image(models.Model):
 
 
 class Tag(models.Model):
+    slug = models.SlugField(max_length=225, unique=True)
     name = models.CharField(max_length=50, unique=True)
     image = models.ForeignKey(Image, null=True, blank=True, on_delete=models.SET_NULL)
 
