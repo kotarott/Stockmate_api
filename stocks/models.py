@@ -56,10 +56,10 @@ class FavoriteSymbol(models.Model):
 
 
 class Comment(TimeStampModel):
-    uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False)
+    uuid = models.UUIDField(db_index=True, default=uuid_lib.uuid4, editable=False, primary_key=True, unique=True)
     author = models.ForeignKey(Profile, on_delete=models.CASCADE)
     symbols = models.ManyToManyField(Symbol, related_name='comments', blank=True)
-    reply = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
+    reply = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='reply_comment')
     likes = models.ManyToManyField(Profile, related_name='comment_like', blank=True)
     # trade = models.ForeignKey()
     body = models.TextField()
