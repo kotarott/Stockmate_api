@@ -201,7 +201,7 @@ class FMPSymbolDetailAPIView(APIView):
 # APIのJsonの形が変わった時に備え、Serializerを通した方がいいかもしれない…
 @api_view(['GET'])
 def fmp_get_historical_price(request, symbol):
-    data = fmp_api.get_historical_price(symbol)
+    data = fmp_api.get_historical_price(symbol, from_date="2020-12-31")
     if data:
         return Response(data)
     else:

@@ -41,7 +41,7 @@ def get_historical_price(symbol, serietype='line', to_date=None, from_date=None,
         query['from'] = from_date
     if timeseries:
         query['timeseries'] = timeseries
-    return request_url(url, query)
+    return request_url(url, query, 5.0)
 
 if __name__ == ('__main__'):
     # search_symbol("SONY")

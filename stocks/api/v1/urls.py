@@ -24,5 +24,5 @@ urlpatterns = [
 
     path('stocks/v1/search/<str:kw>/', SearchFMPSymbolListAPIView.as_view(), name='search-symbol'),
     path('stocks/v1/profile/<str:symbol>/', FMPSymbolDetailAPIView.as_view(), name='profile'),
-    path('stocks/v1/historical_price/<str:symbol>/', fmp_get_historical_price, name='histrical-price'),
+    path('stocks/v1/line-chart/<str:symbol>/', fmp_get_historical_price, name='histrical-price'),
 ]
