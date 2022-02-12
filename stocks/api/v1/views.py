@@ -9,7 +9,7 @@ from rest_framework import viewsets
 from rest_framework import mixins
 from rest_framework.filters import SearchFilter
 
-from stockmate.lib import fmp_api
+from stockmate.lib import fmp_api, format_date
 from stocks.api.v1.permissions import IsAuthorOrReadOnly, IsAdminOrReadOnly
 from stocks.api.v1.serializers import (FMPSearchSymbolSerializer, FMPSymbolProfileSerializer,
     SymbolSerializer, FavoriteSymbolSerializer, CommentSerializer, TagSerializer, SymbolTagsSerializer,
@@ -201,7 +201,25 @@ class FMPSymbolDetailAPIView(APIView):
 # APIのJsonの形が変わった時に備え、Serializerを通した方がいいかもしれない…
 @api_view(['GET'])
 def fmp_get_historical_price(request, symbol):
-    data = fmp_api.get_historical_price(symbol, from_date="2020-12-31")
+    from_date = request.GET.get(key='from', default=str(format_date.get_5years_ago()))
+    data = fmp_api.get_historical_price(symbol, from_date=from_date)
+    if data:
+        return Response(data)
+    else:
+        return Response(
+            {
+                "error": {
+                    "code": 404,
+                    "message": "not found"
+                }
+            },
+            status = status.HTTP_404_NOT_FOUND
+        )
+
+@api_view(['GET'])
+def fmp_get_income_statement(request, symbol):
+    period = request.GET.get(key='period', default=None)
+    data = fmp_api.get_income_statement(symbol, period=period)
     if data:
         return Response(data)
     else:

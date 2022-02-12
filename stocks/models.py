@@ -69,3 +69,17 @@ class Comment(TimeStampModel):
 
     def __str__(self):
         return str(self.uuid)
+
+
+class KeyMetric(TimeStampModel):
+    symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
+    # price = models.FloatField()
+    # ajustment = models.FloatField(default=1)
+    cap =  models.BigIntegerField()
+    peRatio = models.FloatField()
+    opGrowth = models.FloatField()
+    roe = models.FloatField()
+    deRation = models.FloatField()
+
+    def __str__(self):
+        return self.symbol.symbol

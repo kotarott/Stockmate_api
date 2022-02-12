@@ -1,7 +1,7 @@
 from django.urls import path, include
 from stocks.api.v1.views import (SearchFMPSymbolListAPIView, FMPSymbolDetailAPIView, fmp_get_historical_price,
     SymbolListViewSet, SymbolLikeAPIView, CommentViewSet, TagListAPIView, SymbolTagsRUAPIView, SymbolCommentListAPIView,
-    TagToSymbolListAPIView, ImageViewSet, SymbolRUDAPIView, TagViewSet)
+    TagToSymbolListAPIView, ImageViewSet, SymbolRUDAPIView, TagViewSet, fmp_get_income_statement)
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -25,4 +25,5 @@ urlpatterns = [
     path('stocks/v1/search/<str:kw>/', SearchFMPSymbolListAPIView.as_view(), name='search-symbol'),
     path('stocks/v1/profile/<str:symbol>/', FMPSymbolDetailAPIView.as_view(), name='profile'),
     path('stocks/v1/line-chart/<str:symbol>/', fmp_get_historical_price, name='histrical-price'),
+    path('stocks/v1/incomestatement/<str:symbol>/', fmp_get_income_statement, name='income-statement'),
 ]
