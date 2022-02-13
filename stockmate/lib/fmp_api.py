@@ -5,8 +5,8 @@ import requests
 # FMP_V3 = settings.FMP_V3
 
 # test
-API_KEY = '6d5d08c107b889767b1b8cb5a3febfe4'
 FMP_V3 = 'https://financialmodelingprep.com/api/v3/'
+FMP_V4 = 'https://financialmodelingprep.com/api/v4/'
 
 def request_url(url, query, timeout=2.0):
     r = requests.get(url, params=query, timeout=timeout)
@@ -84,7 +84,16 @@ def get_financial_growth(symbol, limit=1, period=None):
         query['period'] = period
     return request_url(url, query, 2.0)
 
+def get_company_outlook(symbol):
+    url = FMP_V4 + 'company-outlook/'
+    query = {
+        'symbol': symbol,
+        'apikey': API_KEY
+    }
+    return request_url(url, query, 2.0)
+
 if __name__ == ('__main__'):
     # search_symbol("SONY")
     # print(get_profile('AAPL'))
-    pass
+    print(get_company_outlook('AAPL'))
+    # pass

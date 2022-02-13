@@ -158,3 +158,4 @@ env.read_env('.env')
 
 FMP_API_KEY = env('FMP_API_KEY')
 FMP_V3 = env('FMP_V3')
+FMP_V4 = env('FMP_V4')
