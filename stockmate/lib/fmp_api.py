@@ -3,8 +3,10 @@ import requests
 
 # API_KEY = settings.FMP_API_KEY
 # FMP_V3 = settings.FMP_V3
+# FMP_V4 = settings.FMP_V4
 
 # test
+API_KEY = '6d5d08c107b889767b1b8cb5a3febfe4'
 FMP_V3 = 'https://financialmodelingprep.com/api/v3/'
 FMP_V4 = 'https://financialmodelingprep.com/api/v4/'
 
@@ -28,6 +30,13 @@ def search_symbol(keyword, limit=10, exchange=None):
 
 def get_profile(symbol):
     url = FMP_V3 + 'profile/' + symbol
+    query = {
+        'apikey': API_KEY
+    }
+    return request_url(url, query)
+
+def get_quote(symbol):
+    url = FMP_V3 + 'quote/' + symbol
     query = {
         'apikey': API_KEY
     }

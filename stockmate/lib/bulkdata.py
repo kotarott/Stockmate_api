@@ -1,3 +1,4 @@
+# import stockmate.lib.fmp_api as fmp
 import fmp_api as fmp
 import threading
 import queue
@@ -6,11 +7,14 @@ import queue
 class Bulk_ndx:
     def __init__(self):
         self.get_ndx_list()
+        self.get_ndx_price()
         self.results = []
         self.final = []
+        self.symbol = '^NDX'
     
     def get_ndx_list(self):
         self.ndx = fmp.get_ndx_list()
+        self.holdings = len(self.ndx)
     
     def worker_metric(self, q):
         queue = q.get()
@@ -72,11 +76,26 @@ class Bulk_ndx:
                 thread = threading.Thread(target=self.worker_outlook, args=(q,))
                 thread.start()
             q.join()
+    
+    def calc_weight(self):
+        self.totalCap = sum([data.get('profile', {}).get('mktCap') for data in self.final])
+        for key, value in enumerate(self.final):
+            try:
+                weight = value.get('profile', {}).get('mktCap') / self.totalCap
+            except Exception:
+                weight = 0
+            self.final[key]['weight'] = weight * 100
+    
+    def get_ndx_price(self):
+        quote = fmp.get_quote(self.symbol)
+        self.price = quote[0]['price']
+        self.changes = quote[0]['changesPercentage']
 
 
 if __name__ == '__main__':
     # bulk = Bulk_ndx()
     # bulk.get_ndx_feature_v2()
+    # bulk.calc_weight()
     # print('all : ', len(bulk.ndx))
     # print('final : ', len(bulk.final))
-    # pass
+    pass

@@ -22,6 +22,24 @@ class Tag(models.Model):
         return self.name
 
 
+# class Industry(models.Model):
+#     slug = models.SlugField(max_length=225, unique=True)
+#     name = models.CharField(max_length=100)
+#     image = models.ForeignKey(Image, blank=True, null=True, on_delete=models.SET_NULL))
+
+#     def __str__(self);
+#     return self.name
+
+
+# class Sector(models.Model):
+#     slug = models.SlugField(max_length=225, unique=True)
+#     name = models.CharField(max_length=100)
+#     image = models.ForeignKey(Image, blank=True, null=True, on_delete=models.SET_NULL))
+
+#     def __str__(self);
+#     return self.name
+
+
 class Symbol(TimeStampModel):
     slug = models.SlugField(max_length=225, unique=True)
     symbol = models.CharField(max_length=20, blank=False)
@@ -30,6 +48,8 @@ class Symbol(TimeStampModel):
     currency = models.CharField(max_length=10, blank=True)
     symbol_type = models.CharField(max_length=50, blank=True)
     exchange = models.CharField(max_length=100, blank=True)
+    industry = models.CharField(max_length=100, blank=True)
+    sector = models.CharField(max_length=100, blank=True)
     photo = models.ForeignKey(Image, blank=True, null=True, on_delete=models.SET_NULL)
     # mic = models.ForeignKey()
     vender = models.CharField(max_length=3, blank=False)
@@ -73,13 +93,13 @@ class Comment(TimeStampModel):
 
 class KeyMetric(TimeStampModel):
     symbol = models.ForeignKey(Symbol, on_delete=models.CASCADE)
-    # price = models.FloatField()
-    # ajustment = models.FloatField(default=1)
-    cap =  models.BigIntegerField()
-    peRatio = models.FloatField()
-    opGrowth = models.FloatField()
-    roe = models.FloatField()
-    deRation = models.FloatField()
+    price = models.FloatField(null=True, blank=True)
+    changes = models.FloatField(null=True, blank=True)
+    cap =  models.BigIntegerField(null=True, blank=True)
+    peRatio = models.FloatField(null=True, blank=True)
+    opGrowth = models.FloatField(null=True, blank=True)
+    roe = models.FloatField(null=True, blank=True)
+    deRation = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return self.symbol.symbol
+        return f'{self.symbol.symbol} created by {self.created_at}'
